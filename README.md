@@ -26,22 +26,44 @@
 
 ## 설치 및 실행
 
+### 1. Foundry 설치
 ```bash
-# 의존성 설치
-npm install
+# Foundry 설치
+curl -L https://foundry.paradigm.xyz | bash
+
+# 새 터미널 세션 시작하거나 PATH 로드
+source ~/.zshenv
+
+# Foundry 도구 설치
+foundryup
+```
+
+### 2. 프로젝트 설정
+```bash
+# OpenZeppelin Contracts 설치 (이미 설치되어 있음)
+forge install OpenZeppelin/openzeppelin-contracts@v5.4.0
 
 # 컴파일
-npm run compile
+forge build
 
-# 테스트 실행
-npm run test
-
-# 로컬 노드 실행
-npm run node
-
-# 배포 (다른 터미널에서)
-npm run deploy
+# 환경 변수 설정 (.env 파일 생성 필요)
+# PRIVATE_KEY=your_private_key_here
+# BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+# ETHERSCAN_API_KEY=your_basescan_api_key_here
 ```
+
+### 3. 배포 (Base Sepolia)
+```bash
+# 환경 변수 로드 후 배포 및 검증
+export PATH="$HOME/.foundry/bin:$PATH"
+source .env && forge script script/Deploy.s.sol \
+  --rpc-url base_sepolia \
+  --broadcast \
+  --verify \
+  --private-key 0x${PRIVATE_KEY}
+```
+
+📖 **자세한 가이드**: [FOUNDRY_DEPLOYMENT_GUIDE.md](./FOUNDRY_DEPLOYMENT_GUIDE.md)
 
 ## 주요 함수
 
