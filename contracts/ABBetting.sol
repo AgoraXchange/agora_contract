@@ -11,6 +11,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
     
     struct Contract {
         address creator;
+        string topic;
         string partyA;
         string partyB;
         uint256 bettingEndTime;
@@ -75,7 +76,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
     uint256 public constant CANCELLATION_DEADLINE = 30 minutes; // 베팅 취소 가능 시간
     
     // 이벤트
-    event ContractCreated(uint256 indexed contractId, address indexed creator, string partyA, string partyB, uint256 bettingEndTime);
+    event ContractCreated(uint256 indexed contractId, address indexed creator, string topic, string partyA, string partyB, uint256 bettingEndTime);
     event BetCommitted(uint256 indexed contractId, address indexed bettor, bytes32 commitHash, uint256 amount);
     event BetRevealed(uint256 indexed contractId, address indexed bettor, Choice choice, uint256 amount);
     event BetCancelled(uint256 indexed contractId, address indexed bettor, uint256 amount);
@@ -98,6 +99,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
     
     // 계약 생성 함수 (개선된 버전)
     function createContract(
+        string memory _topic,
         string memory _partyA,
         string memory _partyB,
         uint256 _bettingDurationInMinutes,
@@ -105,6 +107,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
         uint256 _minBetAmount,
         uint256 _maxBetAmount
     ) external whenNotPaused returns (uint256) {
+        require(bytes(_topic).length > 0, "Topic cannot be empty");
         require(bytes(_partyA).length > 0 && bytes(_partyB).length > 0, "Party names cannot be empty");
         require(_bettingDurationInMinutes > 0, "Duration must be positive");
         require(_partyRewardPercentage <= 50, "Party reward percentage too high");
@@ -117,6 +120,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
         
         contracts[contractId] = Contract({
             creator: msg.sender,
+            topic: _topic,
             partyA: _partyA,
             partyB: _partyB,
             bettingEndTime: bettingEndTime,
@@ -133,7 +137,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
         
         platformStats.totalContracts++;
         
-        emit ContractCreated(contractId, msg.sender, _partyA, _partyB, bettingEndTime);
+        emit ContractCreated(contractId, msg.sender, _topic, _partyA, _partyB, bettingEndTime);
         return contractId;
     }
     
@@ -437,6 +441,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
     // 계약 기본 정보 조회
     function getContractBasic(uint256 _contractId) external view returns (
         address creator,
+        string memory topic,
         string memory partyA,
         string memory partyB,
         uint256 bettingEndTime,
@@ -446,6 +451,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
         Contract memory cont = contracts[_contractId];
         return (
             cont.creator,
+            cont.topic,
             cont.partyA,
             cont.partyB,
             cont.bettingEndTime,
