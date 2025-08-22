@@ -12,6 +12,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
     struct Contract {
         address creator;
         string topic;
+        string description;
         string partyA;
         string partyB;
         uint256 bettingEndTime;
@@ -24,6 +25,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
         uint256 minBetAmount;
         uint256 maxBetAmount;
         uint256 totalBettors;
+        uint256 totalComments;
     }
     
     struct Bet {
@@ -47,6 +49,13 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
         uint256[] betIds;
     }
     
+    struct Comment {
+        address commenter;
+        string content;
+        uint256 timestamp;
+        uint256 likes;
+    }
+    
     struct PlatformStats {
         uint256 totalContracts;
         uint256 totalBets;
@@ -56,7 +65,8 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
     
     // 플랫폼 설정
     address public oracle;
-    uint256 public platformFeePercentage = 2; // 2% 플랫폼 수수료
+    uint256 public platformFeePercentage = 5; // 5% 플랫폼 수수료
+    uint256 public constant PARTY_REWARD_PERCENTAGE =1; // 1% 고정 당사자 보상
     uint256 public defaultMinBet = 0.01 ether;
     uint256 public defaultMaxBet = 100 ether;
     address public feeRecipient;
@@ -69,6 +79,8 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
     mapping(uint256 => Bet[]) public contractBets;
     mapping(uint256 => mapping(address => UserBets)) private userBetsPerContract;
     mapping(uint256 => mapping(address => Commitment)) public commitments;
+    mapping(uint256 => Comment[]) public contractComments;
+    mapping(uint256 => mapping(uint256 => mapping(address => bool))) public commentLikes;
     
     uint256 public contractCounter;
     uint256 public constant REVEAL_DURATION = 1 hours;
@@ -76,7 +88,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
     uint256 public constant CANCELLATION_DEADLINE = 30 minutes; // 베팅 취소 가능 시간
     
     // 이벤트
-    event ContractCreated(uint256 indexed contractId, address indexed creator, string topic, string partyA, string partyB, uint256 bettingEndTime);
+    event ContractCreated(uint256 indexed contractId, address indexed creator, string topic, string description, string partyA, string partyB, uint256 bettingEndTime);
     event BetCommitted(uint256 indexed contractId, address indexed bettor, bytes32 commitHash, uint256 amount);
     event BetRevealed(uint256 indexed contractId, address indexed bettor, Choice choice, uint256 amount);
     event BetCancelled(uint256 indexed contractId, address indexed bettor, uint256 amount);
@@ -86,6 +98,8 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
     event ContractCancelled(uint256 indexed contractId);
     event PlatformFeeUpdated(uint256 newFeePercentage);
     event DefaultBetLimitsUpdated(uint256 newMinBet, uint256 newMaxBet);
+    event CommentAdded(uint256 indexed contractId, address indexed commenter, string content);
+    event CommentLiked(uint256 indexed contractId, uint256 indexed commentId, address indexed liker);
     
     modifier onlyOracle() {
         require(msg.sender == oracle, "Only oracle can call this function");
@@ -100,17 +114,17 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
     // 계약 생성 함수 (개선된 버전)
     function createContract(
         string memory _topic,
+        string memory _description,
         string memory _partyA,
         string memory _partyB,
         uint256 _bettingDurationInMinutes,
-        uint256 _partyRewardPercentage,
         uint256 _minBetAmount,
         uint256 _maxBetAmount
     ) external whenNotPaused returns (uint256) {
         require(bytes(_topic).length > 0, "Topic cannot be empty");
+        require(bytes(_description).length > 0, "Description cannot be empty");
         require(bytes(_partyA).length > 0 && bytes(_partyB).length > 0, "Party names cannot be empty");
         require(_bettingDurationInMinutes > 0, "Duration must be positive");
-        require(_partyRewardPercentage <= 50, "Party reward percentage too high");
         require(_minBetAmount > 0, "Min bet must be positive");
         require(_maxBetAmount >= _minBetAmount, "Max bet must be >= min bet");
         
@@ -121,6 +135,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
         contracts[contractId] = Contract({
             creator: msg.sender,
             topic: _topic,
+            description: _description,
             partyA: _partyA,
             partyB: _partyB,
             bettingEndTime: bettingEndTime,
@@ -129,15 +144,16 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
             winner: Choice.None,
             totalPoolA: 0,
             totalPoolB: 0,
-            partyRewardPercentage: _partyRewardPercentage,
+            partyRewardPercentage: PARTY_REWARD_PERCENTAGE,
             minBetAmount: _minBetAmount > 0 ? _minBetAmount : defaultMinBet,
             maxBetAmount: _maxBetAmount > 0 ? _maxBetAmount : defaultMaxBet,
-            totalBettors: 0
+            totalBettors: 0,
+            totalComments: 0
         });
         
         platformStats.totalContracts++;
         
-        emit ContractCreated(contractId, msg.sender, _topic, _partyA, _partyB, bettingEndTime);
+        emit ContractCreated(contractId, msg.sender, _topic, _description, _partyA, _partyB, bettingEndTime);
         return contractId;
     }
     
@@ -250,8 +266,8 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
         emit ContractCancelled(_contractId);
     }
     
-    // AI 에이전트(오라클)가 승자 선언
-    function declareWinner(uint256 _contractId, Choice _winner) external onlyOracle {
+    // AI 에이전트(오라클)가 승자 선언 (자동 정산 포함)
+    function declareWinner(uint256 _contractId, Choice _winner) external onlyOracle nonReentrant {
         Contract storage cont = contracts[_contractId];
         require(cont.status == ContractStatus.Closed, "Betting not closed");
         require(_winner == Choice.A || _winner == Choice.B, "Invalid winner");
@@ -260,12 +276,27 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
         cont.status = ContractStatus.Resolved;
         
         emit WinnerDeclared(_contractId, _winner);
+        
+        // 자동으로 배당금 분배 실행
+        _distributeRewardsInternal(_contractId);
     }
     
-    // 배당금 분배 함수 (플랫폼 수수료 포함)
+    // 배당금 분배 함수 (외부 호출용 - 이미 자동 분배되었는지 확인)
     function distributeRewards(uint256 _contractId) external nonReentrant {
         Contract storage cont = contracts[_contractId];
         require(cont.status == ContractStatus.Resolved, "Winner not declared");
+        
+        _distributeRewardsInternal(_contractId);
+    }
+    
+    // 내부 배당금 분배 함수 (자동 정산 포함)
+    function _distributeRewardsInternal(uint256 _contractId) internal {
+        Contract storage cont = contracts[_contractId];
+        
+        // 이미 분배되었으면 return
+        if (cont.status == ContractStatus.Distributed) {
+            return;
+        }
         
         uint256 winnerPool = cont.winner == Choice.A ? cont.totalPoolA : cont.totalPoolB;
         uint256 loserPool = cont.winner == Choice.A ? cont.totalPoolB : cont.totalPoolA;
@@ -295,11 +326,40 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
             require(success2, "Party reward transfer failed");
         }
         
+        // 모든 승자에게 자동 배당금 분배
+        _distributeToWinners(_contractId, remainingPool, winnerPool);
+        
         cont.status = ContractStatus.Distributed;
         emit RewardsDistributed(_contractId, partyReward, platformFee, remainingPool);
     }
     
-    // 베팅자가 배당금 청구
+    // 승자들에게 자동 배당금 분배
+    function _distributeToWinners(uint256 _contractId, uint256 _remainingPool, uint256 _winnerPool) internal {
+        Bet[] storage bets = contractBets[_contractId];
+        Choice winner = contracts[_contractId].winner;
+        
+        // 승자들에게 배당금 계산 및 지급
+        for (uint256 i = 0; i < bets.length; i++) {
+            Bet storage bet = bets[i];
+            
+            if (bet.revealed && bet.choice == winner && !bet.claimed) {
+                // 배당금 계산: 원금 + (베팅액/승자풀 × 남은풀)
+                uint256 reward = bet.amount + (bet.amount * _remainingPool) / _winnerPool;
+                
+                // 자동 지급
+                if (reward > 0) {
+                    (bool success, ) = payable(bet.bettor).call{value: reward}("");
+                    if (success) {
+                        bet.claimed = true;
+                        emit RewardClaimed(_contractId, bet.bettor, reward);
+                    }
+                    // 실패해도 전체 프로세스는 계속 진행 (가스 부족 등으로 일부 실패 가능)
+                }
+            }
+        }
+    }
+    
+    // 환불 및 자동 정산 실패 시 보상 청구
     function claimReward(uint256 _contractId) external nonReentrant {
         Contract storage cont = contracts[_contractId];
         require(cont.status == ContractStatus.Distributed || cont.status == ContractStatus.Cancelled, "Not ready for claims");
@@ -318,7 +378,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
                 }
             }
         } else {
-            // 정상 분배
+            // 자동 정산에 실패한 승자들의 수동 청구
             uint256 winnerPool = cont.winner == Choice.A ? cont.totalPoolA : cont.totalPoolB;
             uint256 loserPool = cont.winner == Choice.A ? cont.totalPoolB : cont.totalPoolA;
             uint256 poolAfterFees = loserPool - (loserPool * platformFeePercentage) / 100;
@@ -328,10 +388,12 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
                 Bet storage bet = bets[userBetIds[i]];
                 if (!bet.claimed && bet.bettor == msg.sender && bet.revealed) {
                     if (bet.choice == cont.winner) {
+                        // 승자이지만 자동 정산에 실패한 경우만 수동 청구 가능
                         uint256 reward = bet.amount + (bet.amount * remainingPool) / winnerPool;
                         totalReward += reward;
                         bet.claimed = true;
                     } else if (winnerPool == 0) {
+                        // 승자가 없는 경우 원금 환불
                         totalReward += bet.amount;
                         bet.claimed = true;
                     }
@@ -339,7 +401,7 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
             }
         }
         
-        require(totalReward > 0, "No rewards to claim");
+        require(totalReward > 0, "No rewards to claim or already paid automatically");
         (bool success, ) = payable(msg.sender).call{value: totalReward}("");
         require(success, "Transfer failed");
         
@@ -538,5 +600,78 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
     function setOracle(address _newOracle) external {
         require(msg.sender == oracle || msg.sender == owner(), "Not authorized");
         oracle = _newOracle;
+    }
+    
+    // 댓글 추가 함수 (베팅한 사람만 가능)
+    function addComment(uint256 _contractId, string memory _content) external nonReentrant {
+        require(contracts[_contractId].creator != address(0), "Contract does not exist");
+        require(bytes(_content).length > 0, "Comment cannot be empty");
+        require(bytes(_content).length <= 500, "Comment too long");
+        require(hasUserBet(_contractId, msg.sender), "Must bet first to comment");
+        
+        contractComments[_contractId].push(Comment({
+            commenter: msg.sender,
+            content: _content,
+            timestamp: block.timestamp,
+            likes: 0
+        }));
+        
+        contracts[_contractId].totalComments++;
+        
+        emit CommentAdded(_contractId, msg.sender, _content);
+    }
+    
+    // 사용자가 베팅했는지 확인하는 헬퍼 함수
+    function hasUserBet(uint256 _contractId, address _user) public view returns (bool) {
+        UserBets storage userBets = userBetsPerContract[_contractId][_user];
+        return userBets.betIds.length > 0;
+    }
+    
+    // 댓글 좋아요 함수
+    function likeComment(uint256 _contractId, uint256 _commentId) external {
+        require(contracts[_contractId].creator != address(0), "Contract does not exist");
+        require(_commentId < contractComments[_contractId].length, "Comment does not exist");
+        require(!commentLikes[_contractId][_commentId][msg.sender], "Already liked");
+        
+        commentLikes[_contractId][_commentId][msg.sender] = true;
+        contractComments[_contractId][_commentId].likes++;
+        
+        emit CommentLiked(_contractId, _commentId, msg.sender);
+    }
+    
+    // 댓글 조회 함수
+    function getComments(uint256 _contractId, uint256 _offset, uint256 _limit) 
+        external 
+        view 
+        returns (
+            Comment[] memory comments,
+            uint256 totalComments
+        ) 
+    {
+        Comment[] storage allComments = contractComments[_contractId];
+        totalComments = allComments.length;
+        
+        if (_limit > 100) {
+            _limit = 100; // 최대 100개까지만
+        }
+        
+        uint256 end = _offset + _limit;
+        if (end > totalComments) {
+            end = totalComments;
+        }
+        
+        uint256 length = end > _offset ? end - _offset : 0;
+        comments = new Comment[](length);
+        
+        for (uint256 i = 0; i < length; i++) {
+            comments[i] = allComments[_offset + i];
+        }
+    }
+    
+    // 베팅 가능 여부 확인
+    function canBet(uint256 _contractId) external view returns (bool) {
+        Contract memory cont = contracts[_contractId];
+        return cont.status == ContractStatus.Active && 
+               block.timestamp < cont.bettingEndTime;
     }
 }
