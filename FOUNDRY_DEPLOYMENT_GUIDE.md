@@ -168,9 +168,26 @@ forge script script/Deploy.s.sol --rpc-url base_sepolia --broadcast --verify --p
 ## 📁 ABI 사용법
 
 ### 1. ABI 파일 추출
+
+#### 방법 1: forge inspect 명령어 사용 (추천)
 ```bash
-# ABI 파일 생성
+# ABI만 추출하여 콘솔에 출력
+forge inspect ABBetting abi
+
+# ABI를 JSON 파일로 저장 (jq 필요)
+forge inspect ABBetting abi | jq . > ABBetting_ABI.json
+
+# jq가 없는 경우 grep으로 간단히 추출
+grep -A 2000 '"abi":' out/ABBetting.sol/ABBetting.json | head -2000 > ABBetting_ABI.json
+```
+
+#### 방법 2: 컴파일된 JSON에서 추출 (기존 방법)
+```bash
+# ABI 파일 생성 (jq 필요)
 cat out/ABBetting.sol/ABBetting.json | jq '.abi' > ABBetting_ABI.json
+
+# jq가 없는 경우 grep으로 추출
+grep -A 2000 '"abi":' out/ABBetting.sol/ABBetting.json | head -2000 > ABBetting_ABI.json
 ```
 
 ### 2. JavaScript/TypeScript에서 ABI 사용
