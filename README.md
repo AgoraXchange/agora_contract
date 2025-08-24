@@ -1,13 +1,14 @@
 # ABBetting - Advanced Prediction Market Smart Contract
 
-완전 자동 정산 시스템을 통해 현대적인 베팅 플랫폼과 동일한 사용자 경험을 제공하는 예측 시장 스마트 컨트랙트입니다.
+완전 자동 정산 시스템과 간편한 베팅 시스템을 통해 현대적인 베팅 플랫폼과 동일한 사용자 경험을 제공하는 예측 시장 스마트 컨트랙트입니다.
 
 ## 🌟 핵심 특징
 
 - ✨ **완전 자동 정산** - 즉시 정산
 - 🔐 **베팅자 전용 댓글** - 베팅 참여자만 토론 가능
-- 🛡️ **Commit-Reveal 패턴** - 프론트러닝 방지
+- 🚀 **간편한 베팅 시스템** - 원클릭 즉시 베팅으로 사용자 친화적 경험
 - 🎯 **AI 오라클 시스템** - 자동화된 승자 결정
+- 💰 **정확한 수수료 계산** - 플랫폼 수수료 5% + 생성자 보상 1% 고정
 
 ## 주요 기능
 
@@ -16,9 +17,10 @@
 - **베팅 조건 설정**: 최소/최대 베팅 금액, 베팅 기간 설정
 - **자동 시간 관리**: 베팅 기간 + 공개 기간 자동 설정
 
-### 2. 베팅 시스템
-- **Commit-Reveal 패턴**: 프론트러닝 방지를 위한 2단계 베팅
-- **베팅 취소**: 베팅 종료 30분 전까지 취소 가능
+### 2. 간편 베팅 시스템
+- **원클릭 베팅**: 즉시 베팅 완료, 복잡한 단계 없음
+- **실시간 풀 업데이트**: 베팅과 동시에 풀 크기와 배당률 즉시 반영
+- **AI 오라클 보호**: AI가 결과를 판단하므로 프론트러닝 방지 불필요
 - **베팅 자격 확인**: `canBet()` 함수로 실시간 베팅 가능 여부 확인
 
 ### 3. 댓글 시스템 (NEW)
@@ -44,7 +46,7 @@
 ```
 📝 Agreement 생성
     ↓
-🎯 베팅 참여 (Commit-Reveal)
+🎯 베팅 참여 (원클릭 간편 베팅)
     ↓
 💬 댓글 토론 (베팅자만)
     ↓
@@ -120,13 +122,10 @@ createContract(
 // 당사자 보상 비율은 1%로 고정됨
 ```
 
-### 베팅 (Commit-Reveal)
+### 간편 베팅
 ```solidity
-// 1단계: 커밋
-commitBet(uint256 contractId, bytes32 commitHash) payable
-
-// 2단계: 공개 (베팅 기간 종료 후)
-revealBet(uint256 contractId, Choice choice, uint256 nonce)
+// 원클릭 즉시 베팅
+simpleBet(uint256 contractId, Choice choice) payable
 
 // 베팅 가능 여부 확인
 canBet(uint256 contractId) view returns (bool)
@@ -147,12 +146,8 @@ getComments(uint256 contractId, uint256 offset, uint256 limit)
 hasUserBet(uint256 contractId, address user) view returns (bool)
 ```
 
-### 베팅 취소
-```solidity
-cancelBet(uint256 contractId)
-```
 
-### 승자 결정 및 완전 자동 정산 (업데이트됨)
+### 승자 결정 및 완전 자동 정산
 ```solidity
 // 승자 결정 시 모든 당사자에게 즉시 자동 정산
 declareWinner(uint256 contractId, Choice winner) // 오라클 전용
@@ -160,6 +155,47 @@ declareWinner(uint256 contractId, Choice winner) // 오라클 전용
 // 환불 및 자동 정산 실패 시만 사용 (일반적으로 불필요)
 claimReward(uint256 contractId)
 ```
+
+#### 오라클 승자 결정 호출 방법
+
+**Cast를 이용한 직접 호출:**
+```bash
+# 환경 변수 설정
+CONTRACT_ADDRESS="0x22bA67768b3275b020539A068cA2E66f26Ce8607"
+ORACLE_PRIVATE_KEY="your_oracle_private_key"
+RPC_URL="https://sepolia.base.org"
+
+# Real Madrid(A) 승리로 결정 (Choice.A = 1)
+cast send $CONTRACT_ADDRESS \
+  "declareWinner(uint256,uint8)" \
+  0 1 \
+  --private-key $ORACLE_PRIVATE_KEY \
+  --rpc-url $RPC_URL
+
+# Barcelona(B) 승리로 결정 (Choice.B = 2)  
+cast send $CONTRACT_ADDRESS \
+  "declareWinner(uint256,uint8)" \
+  0 2 \
+  --private-key $ORACLE_PRIVATE_KEY \
+  --rpc-url $RPC_URL
+```
+
+**Choice 값:**
+- `0` = None (초기값)
+- `1` = A (첫 번째 선택지 승리)
+- `2` = B (두 번째 선택지 승리)
+
+**예시 시나리오:**
+```bash
+# 계약 ID 0번, Real Madrid 승리
+cast send 0x22bA67768b3275b020539A068cA2E66f26Ce8607 \
+  "declareWinner(uint256,uint8)" \
+  0 1 \
+  --private-key 0x${PRIVATE_KEY} \
+  --rpc-url https://sepolia.base.org
+```
+
+⚡ **자동 정산**: 승자 결정과 동시에 모든 참가자에게 자동으로 상금이 지급됩니다!
 
 ### 관리자 함수
 ```solidity
@@ -209,9 +245,9 @@ setDefaultBetLimits(uint256 minBet, uint256 maxBet)
 ## 보안 기능
 
 - **ReentrancyGuard**: 재진입 공격 방지
-- **Pausable**: 긴급 상황 대응
+- **Pausable**: 긁 상황 대응
 - **Ownable**: 관리자 권한 제어
-- **Commit-Reveal**: 프론트러닝 방지
+- **AI 오라클 검증**: AI가 결과 판정으로 조작 방지
 - **안전한 이더 전송**: call 함수 사용
 - **베팅 자격 검증**: 댓글 작성 시 베팅 여부 확인
 - **자동 정산**: 승자 결정 시 즉시 정산으로 지연 위험 최소화
@@ -228,6 +264,7 @@ setDefaultBetLimits(uint256 minBet, uint256 maxBet)
 ### 완전 자동화된 상태 관리
 - 승자 결정 시 `Resolved` → `Distributed` 자동 전환
 - 플랫폼 수수료, 당사자 보상, 모든 승자 배당금 즉시 자동 지급
+- 간편 베팅으로 즉시 풀 반영 및 자동 정산
 - 중복 정산 방지
 - 즉시 정산 경험
 
