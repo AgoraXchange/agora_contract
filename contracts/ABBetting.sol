@@ -206,7 +206,16 @@ contract ABBetting is ReentrancyGuard, Pausable, Ownable {
     // AI 에이전트(오라클)가 승자 선언 (자동 정산 포함)
     function declareWinner(uint256 _contractId, Choice _winner) external onlyOracle nonReentrant {
         Contract storage cont = contracts[_contractId];
-        require(cont.status == ContractStatus.Closed, "Betting not closed");
+        
+        // Active 또는 Closed 상태 모두 허용
+        require(
+            cont.status == ContractStatus.Active || 
+            cont.status == ContractStatus.Closed, 
+            "Invalid status for declaring winner"
+        );
+        
+        // 베팅 시간이 끝났는지 확인
+        require(block.timestamp >= cont.bettingEndTime, "Betting period not ended");
         require(_winner == Choice.A || _winner == Choice.B, "Invalid winner");
         
         cont.winner = _winner;
