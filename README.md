@@ -158,40 +158,59 @@ claimReward(uint256 contractId)
 
 #### 오라클 승자 결정 호출 방법
 
-**Cast를 이용한 직접 호출:**
-```bash
-# 환경 변수 설정
-CONTRACT_ADDRESS="0x22bA67768b3275b020539A068cA2E66f26Ce8607"
-ORACLE_PRIVATE_KEY="your_oracle_private_key"
-RPC_URL="https://sepolia.base.org"
+**✅ 간소화된 프로세스: 베팅 시간 종료 후 바로 승자 결정 가능**
 
+베팅 기간(`bettingEndTime`)이 끝나면 오라클이 바로 승자를 결정할 수 있습니다:
+
+```bash
 # Real Madrid(A) 승리로 결정 (Choice.A = 1)
-cast send $CONTRACT_ADDRESS \
+cast send 0xf3d1C9e6A515629841548F6B7a48B0a97Cd23cde \
   "declareWinner(uint256,uint8)" \
   0 1 \
-  --private-key $ORACLE_PRIVATE_KEY \
-  --rpc-url $RPC_URL
+  --private-key 0x${ORACLE_PRIVATE_KEY} \
+  --rpc-url https://sepolia.base.org
 
-# Barcelona(B) 승리로 결정 (Choice.B = 2)  
-cast send $CONTRACT_ADDRESS \
+# 또는 Barcelona(B) 승리로 결정 (Choice.B = 2)
+cast send 0x22bA67768b3275b020539A068cA2E66f26Ce8607 \
   "declareWinner(uint256,uint8)" \
   0 2 \
-  --private-key $ORACLE_PRIVATE_KEY \
-  --rpc-url $RPC_URL
+  --private-key 0x${ORACLE_PRIVATE_KEY} \
+  --rpc-url https://sepolia.base.org
 ```
+
+**참고: `closeBetting()` 호출은 선택 사항입니다**
+- 베팅 시간이 끝나면 자동으로 새로운 베팅 차단
+- `declareWinner()`가 Active/Closed 상태 모두 처리 가능
+- 원한다면 여전히 수동으로 `closeBetting()` 호출 가능
+
+**상태 확인 방법:**
+```bash
+# 현재 상태 조회
+cast call 0x22bA67768b3275b020539A068cA2E66f26Ce8607 \
+  "contracts(uint256)" \
+  0 \
+  --rpc-url https://sepolia.base.org
+```
+
+**Contract Status 값:**
+- `0` = Active (베팅 진행 중)
+- `1` = Closed (베팅 종료, 승자 결정 대기)
+- `2` = Resolved (승자 결정됨)
+- `3` = Distributed (상금 분배 완료)
+- `4` = Cancelled (취소됨)
 
 **Choice 값:**
 - `0` = None (초기값)
 - `1` = A (첫 번째 선택지 승리)
 - `2` = B (두 번째 선택지 승리)
 
-**예시 시나리오:**
+**전체 예시 시나리오:**
 ```bash
-# 계약 ID 0번, Real Madrid 승리
+# 베팅 시간 종료 확인 후 바로 Real Madrid 승리로 결정
 cast send 0x22bA67768b3275b020539A068cA2E66f26Ce8607 \
   "declareWinner(uint256,uint8)" \
   0 1 \
-  --private-key 0x${PRIVATE_KEY} \
+  --private-key 0x${ORACLE_PRIVATE_KEY} \
   --rpc-url https://sepolia.base.org
 ```
 
