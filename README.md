@@ -1,99 +1,99 @@
-# ABBetting - Advanced Prediction Market Smart Contract
+# Agora Contract - Onchain Debate & Prediction Market
 
-완전 자동 정산 시스템과 간편한 베팅 시스템을 통해 현대적인 베팅 플랫폼과 동일한 사용자 경험을 제공하는 예측 시장 스마트 컨트랙트입니다.
+A fully automated prediction market smart contract designed for debate-based betting with AI oracle integration. Features instant settlement, betting-gated comments, and seamless user experience.
 
-## 🌟 핵심 특징
+## 🌟 Key Features
 
-- ✨ **완전 자동 정산** - 즉시 정산
-- 🔐 **베팅자 전용 댓글** - 베팅 참여자만 토론 가능
-- 🚀 **간편한 베팅 시스템** - 원클릭 즉시 베팅으로 사용자 친화적 경험
-- 🎯 **AI 오라클 시스템** - 자동화된 승자 결정
-- 💰 **정확한 수수료 계산** - 플랫폼 수수료 5% + 생성자 보상 1% 고정
+- ✨ **Fully Automated Settlement** - Instant reward distribution upon winner declaration
+- 🔐 **Betting-Gated Comments** - Only participants can join the debate
+- 🚀 **Simple Betting System** - One-click instant betting with user-friendly experience
+- 🎯 **AI Oracle Integration** - Automated winner determination by AI jury
+- 💰 **Transparent Fee Structure** - 5% platform fee + 1% fixed creator reward
 
-## 주요 기능
+## Core Functionality
 
-### 1. Agreement 생성 시스템
-- **상세 정보 포함**: 주제(topic), 설명(description), 당사자 A/B 정의
-- **베팅 조건 설정**: 최소/최대 베팅 금액, 베팅 기간 설정
-- **자동 시간 관리**: 베팅 기간 + 공개 기간 자동 설정
+### 1. Debate Contract Creation
+- **Rich Metadata**: topic, description, party A/B definitions
+- **Flexible Betting Conditions**: customizable min/max bet amounts and duration
+- **Automated Time Management**: betting period with automatic status transitions
 
-### 2. 간편 베팅 시스템
-- **원클릭 베팅**: 즉시 베팅 완료, 복잡한 단계 없음
-- **실시간 풀 업데이트**: 베팅과 동시에 풀 크기와 배당률 즉시 반영
-- **AI 오라클 보호**: AI가 결과를 판단하므로 프론트러닝 방지 불필요
-- **베팅 자격 확인**: `canBet()` 함수로 실시간 베팅 가능 여부 확인
+### 2. Simple Betting System
+- **One-Click Betting**: instant bet placement without complex steps
+- **Real-time Pool Updates**: pools and odds updated immediately upon betting
+- **AI Oracle Protection**: front-running protection through AI-based result determination
+- **Betting Eligibility Check**: `canBet()` function for real-time betting status verification
 
-### 3. 댓글 시스템 (NEW)
-- **베팅자 전용**: 베팅에 참여한 사용자만 댓글 작성 가능
-- **댓글 좋아요**: 댓글에 좋아요 기능 (중복 방지)
-- **무료 댓글**: 댓글 작성에 별도 수수료 없음
-- **길이 제한**: 댓글 최대 500자 제한
+### 3. Debate Comment System
+- **Betting-Gated Access**: only users who have placed bets can comment
+- **Comment Likes**: like functionality with duplicate prevention
+- **Free Comments**: no additional fees for commenting
+- **Length Limits**: maximum 500 characters per comment
 
-### 4. 완전 자동 정산 시스템 (NEW)
-- **승자 결정 시 즉시 전액 분배**: 오라클이 승자 결정하면 모든 당사자에게 즉시 자동 정산
-- **플랫폼 수수료 자동 차감**: 패자 풀에서 2% 자동 징수 → `feeRecipient`
-- **당사자 보상 자동 지급**: 계약 생성자에게 보상 자동 지급
-- **승자 배당금 자동 지급**: 모든 승자들에게 배당금 자동 지급 (개별 청구 불필요)
+### 4. Fully Automated Settlement System
+- **Instant Distribution**: all parties receive funds immediately upon winner declaration
+- **Automatic Platform Fees**: 5% automatically deducted from loser pool → `feeRecipient`
+- **Automatic Creator Rewards**: fixed 1% reward automatically sent to contract creator
+- **Automatic Winner Payouts**: all winners receive rewards instantly (no manual claiming needed)
 
-### 5. 보안 및 관리 기능
-- **긴급 정지 (Pausable)**: 관리자가 긴급 상황시 컨트랙트 일시정지
-- **계약 취소**: 베팅이 없거나 문제 발생시 계약 취소
-- **통계 조회**: 계약별/플랫폼 전체 통계 확인
-- **페이지네이션**: DoS 공격 방지를 위한 베팅/댓글 조회 페이징
+### 5. Security & Management Features
+- **Emergency Pause**: admin can pause contract operations during emergencies
+- **Contract Cancellation**: contracts can be cancelled if no bets or issues arise
+- **Statistics Tracking**: detailed contract and platform-wide analytics
+- **Pagination Support**: DoS attack prevention through paginated bet/comment queries
 
-## 🔄 플로우 다이어그램
+## 🔄 Workflow Diagram
 
 ```
-📝 Agreement 생성
+📝 Create Debate Contract
     ↓
-🎯 베팅 참여 (원클릭 간편 베팅)
+🎯 Place Bets (One-Click Simple Betting)
     ↓
-💬 댓글 토론 (베팅자만)
+💬 Join Debate (Bettors Only)
     ↓
-⏰ 베팅 기간 종료
+⏰ Betting Period Ends
     ↓
-🏆 AI 오라클 승자 결정
+🏆 AI Oracle Declares Winner
     ↓
-💰 완전 자동 정산 ✨
-   ├── 플랫폼 수수료 (5%) → 플랫폼
-   ├── 당사자 보상 (1% 고정) → 생성자
-   └── 승자 배당금 → 모든 승자 🎉
+💰 Fully Automated Settlement ✨
+   ├── Platform Fee (5%) → Platform
+   ├── Creator Reward (1% Fixed) → Creator
+   └── Winner Payouts → All Winners 🎉
 ```
 
-### ⚡ 즉시 정산 시스템
-승자 결정과 동시에 모든 당사자가 자동으로 자금을 받습니다. 추가 액션이 필요하지 않습니다!
+### ⚡ Instant Settlement System
+All parties automatically receive their funds simultaneously upon winner declaration. No additional actions required!
 
-## 설치 및 실행
+## Installation & Deployment
 
-### 1. Foundry 설치
+### 1. Install Foundry
 ```bash
-# Foundry 설치
+# Install Foundry
 curl -L https://foundry.paradigm.xyz | bash
 
-# 새 터미널 세션 시작하거나 PATH 로드
+# Start new terminal session or load PATH
 source ~/.zshenv
 
-# Foundry 도구 설치
+# Install Foundry tools
 foundryup
 ```
 
-### 2. 프로젝트 설정
+### 2. Project Setup
 ```bash
-# OpenZeppelin Contracts 설치 (이미 설치되어 있음)
+# Install OpenZeppelin Contracts (already installed)
 forge install OpenZeppelin/openzeppelin-contracts@v5.4.0
 
-# 컴파일
+# Compile
 forge build
 
-# 환경 변수 설정 (.env 파일 생성 필요)
+# Environment Variables Setup (.env file required)
 # PRIVATE_KEY=your_private_key_here
 # BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
 # ETHERSCAN_API_KEY=your_basescan_api_key_here
 ```
 
-### 3. 배포 (Base Sepolia)
+### 3. Deploy (Base Sepolia)
 ```bash
-# 환경 변수 로드 후 배포 및 검증
+# Load environment variables and deploy with verification
 export PATH="$HOME/.foundry/bin:$PATH"
 source .env && forge script script/Deploy.s.sol \
   --rpc-url base_sepolia \
@@ -102,191 +102,200 @@ source .env && forge script script/Deploy.s.sol \
   --private-key 0x${PRIVATE_KEY}
 ```
 
-📖 **자세한 가이드**: [FOUNDRY_DEPLOYMENT_GUIDE.md](./FOUNDRY_DEPLOYMENT_GUIDE.md)
+📖 **Detailed Guide**: [FOUNDRY_DEPLOYMENT_GUIDE.md](./FOUNDRY_DEPLOYMENT_GUIDE.md)
 
-## 🔧 스마트 컨트랙트 API
+## 🔧 Smart Contract API
 
-### 핵심 기능별 함수 그룹
+### Core Functions by Category
 
-### Agreement 생성 (업데이트됨)
+### Contract Creation
 ```solidity
 createContract(
-    string topic,           // 주제
-    string description,     // 설명 (NEW)
-    string partyA,         // 당사자 A
-    string partyB,         // 당사자 B
+    string topic,           // Debate topic
+    string description,     // Detailed description
+    string partyA,         // Party A name
+    string partyB,         // Party B name
     uint256 bettingDurationInMinutes,
     uint256 minBetAmount,
     uint256 maxBetAmount
 )
-// 당사자 보상 비율은 1%로 고정됨
+// Creator reward percentage is fixed at 1%
 ```
 
-### 간편 베팅
+### Simple Betting
 ```solidity
-// 원클릭 즉시 베팅
+// One-click instant betting
 simpleBet(uint256 contractId, Choice choice) payable
 
-// 베팅 가능 여부 확인
+// Check if betting is possible
 canBet(uint256 contractId) view returns (bool)
 ```
 
-### 댓글 시스템 (NEW)
+### Comment System
 ```solidity
-// 댓글 작성 (베팅한 사람만)
+// Add comment (bettors only)
 addComment(uint256 contractId, string content)
 
-// 댓글 좋아요
+// Like comment
 likeComment(uint256 contractId, uint256 commentId)
 
-// 댓글 조회 (페이징)
+// Get comments (paginated)
 getComments(uint256 contractId, uint256 offset, uint256 limit)
 
-// 베팅 여부 확인
+// Check if user has bet
 hasUserBet(uint256 contractId, address user) view returns (bool)
 ```
 
 
-### 승자 결정 및 완전 자동 정산
+### Winner Declaration & Automated Settlement
 ```solidity
-// 승자 결정 시 모든 당사자에게 즉시 자동 정산
-declareWinner(uint256 contractId, Choice winner) // 오라클 전용
+// Declare winner with instant automated settlement
+declareWinner(uint256 contractId, Choice winner) // Oracle only
 
-// 환불 및 자동 정산 실패 시만 사용 (일반적으로 불필요)
+// Manual claim (only for refunds or failed auto-settlement)
 claimReward(uint256 contractId)
 ```
 
-#### 오라클 승자 결정 호출 방법
+#### Oracle Winner Declaration Usage
 
-**✅ 간소화된 프로세스: 베팅 시간 종료 후 바로 승자 결정 가능**
+**✅ Simplified Process: Winner can be declared immediately after betting period ends**
 
-베팅 기간(`bettingEndTime`)이 끝나면 오라클이 바로 승자를 결정할 수 있습니다:
+Once the betting period (`bettingEndTime`) ends, the oracle can immediately declare the winner:
 
 ```bash
-# Real Madrid(A) 승리로 결정 (Choice.A = 1)
-cast send 0xf3d1C9e6A515629841548F6B7a48B0a97Cd23cde \
+# Declare Party A winner (Choice.A = 1)
+cast send 0x2BfDF9A3b3C28385E198Ba4d85F32A4B8b69a3db \
   "declareWinner(uint256,uint8)" \
   0 1 \
   --private-key 0x${ORACLE_PRIVATE_KEY} \
   --rpc-url https://sepolia.base.org
 
-# 또는 Barcelona(B) 승리로 결정 (Choice.B = 2)
-cast send 0x22bA67768b3275b020539A068cA2E66f26Ce8607 \
+# Or declare Party B winner (Choice.B = 2)
+cast send 0x2BfDF9A3b3C28385E198Ba4d85F32A4B8b69a3db \
   "declareWinner(uint256,uint8)" \
   0 2 \
   --private-key 0x${ORACLE_PRIVATE_KEY} \
   --rpc-url https://sepolia.base.org
 ```
 
-**참고: `closeBetting()` 호출은 선택 사항입니다**
-- 베팅 시간이 끝나면 자동으로 새로운 베팅 차단
-- `declareWinner()`가 Active/Closed 상태 모두 처리 가능
-- 원한다면 여전히 수동으로 `closeBetting()` 호출 가능
+**Note: `closeBetting()` call is optional**
+- New bets are automatically blocked when betting time ends
+- `declareWinner()` can handle both Active/Closed states
+- Manual `closeBetting()` call is still available if desired
 
-**상태 확인 방법:**
+**Status Check:**
 ```bash
-# 현재 상태 조회
-cast call 0x22bA67768b3275b020539A068cA2E66f26Ce8607 \
+# Check current status
+cast call 0x2BfDF9A3b3C28385E198Ba4d85F32A4B8b69a3db \
   "contracts(uint256)" \
   0 \
   --rpc-url https://sepolia.base.org
 ```
 
-**Contract Status 값:**
-- `0` = Active (베팅 진행 중)
-- `1` = Closed (베팅 종료, 승자 결정 대기)
-- `2` = Resolved (승자 결정됨)
-- `3` = Distributed (상금 분배 완료)
-- `4` = Cancelled (취소됨)
+**Contract Status Values:**
+- `0` = Active (betting in progress)
+- `1` = Closed (betting ended, awaiting winner declaration)
+- `2` = Resolved (winner declared)
+- `3` = Distributed (rewards distributed)
+- `4` = Cancelled (cancelled)
 
-**Choice 값:**
-- `0` = None (초기값)
-- `1` = A (첫 번째 선택지 승리)
-- `2` = B (두 번째 선택지 승리)
+**Choice Values:**
+- `0` = None (initial value)
+- `1` = A (Party A wins)
+- `2` = B (Party B wins)
 
-**전체 예시 시나리오:**
+**Complete Example Scenario:**
 ```bash
-# 베팅 시간 종료 확인 후 바로 Real Madrid 승리로 결정
-cast send 0x22bA67768b3275b020539A068cA2E66f26Ce8607 \
+# After betting time ends, declare Party A winner immediately
+cast send 0x2BfDF9A3b3C28385E198Ba4d85F32A4B8b69a3db \
   "declareWinner(uint256,uint8)" \
   0 1 \
   --private-key 0x${ORACLE_PRIVATE_KEY} \
   --rpc-url https://sepolia.base.org
 ```
 
-⚡ **자동 정산**: 승자 결정과 동시에 모든 참가자에게 자동으로 상금이 지급됩니다!
+⚡ **Automated Settlement**: All participants automatically receive their rewards simultaneously upon winner declaration!
 
-### 관리자 함수
+### Admin Functions
 ```solidity
 pause() / unpause()
 setPlatformFee(uint256 newFeePercentage)
 setDefaultBetLimits(uint256 minBet, uint256 maxBet)
+setFeeRecipient(address newRecipient)
+setOracle(address newOracle)
 ```
 
-## 완전 자동 정산 시스템
+## Fully Automated Settlement System
 
-### 승자 결정 시 즉시 실행되는 완전 자동 정산
-1. **플랫폼 수수료**: 패자 풀의 5% → `feeRecipient`로 즉시 전송 ✅
-2. **당사자 보상**: (패자 풀 - 플랫폼 수수료)의 1% → 계약 생성자에게 즉시 전송 ✅
-3. **모든 승자 배당금**: 나머지 금액을 모든 승자들에게 즉시 자동 지급 ✅
+### Instant Execution Upon Winner Declaration
+1. **Platform Fee**: 5% of loser pool → instantly sent to `feeRecipient` ✅
+2. **Creator Reward**: 1% of (loser pool - platform fee) → instantly sent to contract creator ✅
+3. **Winner Payouts**: remaining amount automatically distributed to all winners ✅
 
-### 자동 정산의 장점
-- **즉시 지급**: 승자 결정과 동시에 모든 당사자가 자금 수령
-- **가스비 효율**: 하나의 트랜잭션으로 모든 정산 완료
-- **사용자 경험**: 추가 액션 불필요한 즉시 정산
-- **자금 묶임 방지**: 미청구로 인한 컨트랙트 잔고 누적 없음
+### Benefits of Automated Settlement
+- **Instant Payout**: all parties receive funds simultaneously upon winner declaration
+- **Gas Efficiency**: complete settlement in a single transaction
+- **User Experience**: instant settlement without additional actions required
+- **No Fund Lock**: prevents contract balance accumulation from unclaimed rewards
 
-### 배당 계산 예시 (완전 자동)
-- 총 베팅: A에 3 ETH, B에 1 ETH 
-- A 승리시 (모든 지급 즉시 자동 실행):
-  - 플랫폼 수수료: 0.05 ETH (1 ETH × 5%) → `feeRecipient` 즉시 수령 ✅
-  - 당사자 보상: 0.0095 ETH ((1 - 0.05) × 1%) → 계약 생성자 즉시 수령 ✅
-  - 베팅자 풀: 0.9405 ETH → A 승자들에게 즉시 자동 분배 ✅
-  - 베팅자별 배당: 원금 + (베팅액/승자풀 × 베팅자풀) - 모든 승자가 즉시 수령
+### Payout Calculation Example (Fully Automated)
+- Total Bets: 3 ETH on A, 1 ETH on B 
+- If A Wins (all payouts executed instantly and automatically):
+  - Platform Fee: 0.05 ETH (1 ETH × 5%) → `feeRecipient` receives instantly ✅
+  - Creator Reward: 0.0095 ETH ((1 - 0.05) × 1%) → contract creator receives instantly ✅
+  - Winner Pool: 0.9405 ETH → automatically distributed to A winners instantly ✅
+  - Individual Payout: principal + (bet amount / winner pool × remaining pool) - all winners receive instantly
 
-## 댓글 시스템 특징
+## Comment System Features
 
-### 접근 제한
-- 베팅에 참여한 사용자만 댓글 작성 가능
-- `hasUserBet()` 함수로 베팅 여부 검증
+### Access Control
+- Only users who have placed bets can comment
+- Betting verification through `hasUserBet()` function
 
-### 댓글 기능
-- 최대 500자까지 작성 가능
-- 댓글별 좋아요 기능
-- 좋아요 중복 방지 (한 사용자당 한 번만)
-- 댓글 작성 수수료 없음
+### Comment Functionality
+- Maximum 500 characters per comment
+- Like functionality for each comment
+- Duplicate like prevention (one per user)
+- No fees for commenting
 
-### 댓글 조회
-- 페이징 지원 (최대 100개씩)
-- 작성 시간순 조회
-- 좋아요 수 포함
+### Comment Retrieval
+- Pagination support (up to 100 at a time)
+- Chronological ordering
+- Like counts included
 
-## 보안 기능
+## Security Features
 
-- **ReentrancyGuard**: 재진입 공격 방지
-- **Pausable**: 긁 상황 대응
-- **Ownable**: 관리자 권한 제어
-- **AI 오라클 검증**: AI가 결과 판정으로 조작 방지
-- **안전한 이더 전송**: call 함수 사용
-- **베팅 자격 검증**: 댓글 작성 시 베팅 여부 확인
-- **자동 정산**: 승자 결정 시 즉시 정산으로 지연 위험 최소화
+- **ReentrancyGuard**: prevents reentrancy attacks
+- **Pausable**: emergency response capability
+- **Ownable**: admin access control
+- **AI Oracle Verification**: manipulation prevention through AI-based result determination
+- **Safe Ether Transfers**: uses call function for secure transfers
+- **Betting Verification**: checks betting status for comment access
+- **Automated Settlement**: instant settlement upon winner declaration minimizes delay risks
 
-## Contract Status 관리
+## Contract Status Management
 
-### 상태 전환
-- **Active**: 베팅 가능한 상태
-- **Closed**: 베팅 종료, 공개 대기
-- **Resolved**: 승자 결정됨
-- **Distributed**: 배당금 분배 완료 (자동)
-- **Cancelled**: 계약 취소
+### Status Transitions
+- **Active**: betting is open
+- **Closed**: betting ended, awaiting winner declaration
+- **Resolved**: winner has been declared
+- **Distributed**: rewards distributed (automated)
+- **Cancelled**: contract cancelled
 
-### 완전 자동화된 상태 관리
-- 승자 결정 시 `Resolved` → `Distributed` 자동 전환
-- 플랫폼 수수료, 당사자 보상, 모든 승자 배당금 즉시 자동 지급
-- 간편 베팅으로 즉시 풀 반영 및 자동 정산
-- 중복 정산 방지
-- 즉시 정산 경험
+### Fully Automated Status Management
+- Winner declaration triggers automatic `Resolved` → `Distributed` transition
+- Platform fees, creator rewards, and winner payouts instantly distributed
+- Simple betting provides immediate pool reflection and automated settlement
+- Prevents duplicate settlements
+- Instant settlement experience
 
-## 라이선스
+## Current Deployment
+
+**Base Sepolia Testnet Contract Address:**
+`0x2BfDF9A3b3C28385E198Ba4d85F32A4B8b69a3db`
+
+**Block Explorer:** [View on BaseScan](https://sepolia.basescan.org/address/0x2BfDF9A3b3C28385E198Ba4d85F32A4B8b69a3db)
+
+## License
 
 MIT
